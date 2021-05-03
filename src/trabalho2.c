@@ -6,10 +6,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "ArrayList.h"
-#include "Calculos.h"
-#include "EstrutaraDeDados.h"
-#include "InterfaceUsuario.h"
+#include "ArrayList.c"
+#include "Calculos.c"
+#include "EstrutaraDeDados.c"
+#include "InterfaceUsuario.c"
 
 pagina_t *primeira, *ultima, *paginas_logicas = NULL;
 
