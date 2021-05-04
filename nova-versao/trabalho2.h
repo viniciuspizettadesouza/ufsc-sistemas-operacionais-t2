@@ -54,6 +54,6 @@ void print_screen();
 void input_process_max_size();
 void input_memory_size();
 void input_page_size();
-void imprimeResumoMenu1(unsigned int tam_memorica_fisica, unsigned int tam_max_processo, unsigned int tam_pagina);
+void reviewMenu(unsigned int tam_memorica_fisica, unsigned int tam_max_processo, unsigned int tam_pagina);
 void viewMemory(memory_t *physical_memory);
 void visualizarTabalePaginas(int numero, processo_t *processos, memory_t *physical_memory);
