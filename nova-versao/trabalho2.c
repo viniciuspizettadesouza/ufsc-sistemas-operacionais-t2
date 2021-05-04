@@ -19,22 +19,92 @@ char option;
 unsigned int process_number = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0, used_pages = 0;
 
 // MEMÓRIA LÓGICA
-int p;  //	número da página: usado como um índice em uma tabela de página
-int d;  //	page-offset (Deslocamento)
+int p; //	número da página: usado como um índice em uma tabela de página
+int d; //	page-offset (Deslocamento)
 
 // MEMÓRIA FÍSICA
-int f;                  // Número do frame: endereço básico de cada página na memória física
-int frames_number;      // Memória física onde o frame 0 vai dos quadros [0] aos quadros [X]
-int table_pages[1];     // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada frame de 0 a X
+int f;              // Número do frame: endereço básico de cada página na memória física
+int frames_number;  // Memória física onde o frame 0 vai dos quadros [0] aos quadros [X]
+int table_pages[1]; // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada frame de 0 a X
 int start, current;
 int offset, pagefault = 0;
 int freeFrame = -1;
 
 volatile bool exit_menu;
 
-void add_page(page_t *head, page_t *new_page) {
+// DATA STRUCTURE START
+process_t *get_process(int id, process_t *process)
+{
+    if (process == NULL)
+    {
+        return NULL;
+    }
+
+    process_t *tmp = process;
+    while (tmp != NULL)
+    {
+        if (tmp->id == id)
+        {
+            return tmp;
+        }
+        tmp = tmp->next_process;
+    }
+    return NULL;
+}
+
+int insert_frame(int page, process_t *process, memory_t *memmory)
+{
+    int frame = -1;
+    int pages = memmory->size_KB / (int)pow(2, memmory->f);
+    int shift_kb = (int)pow(2, process->d) / 1024;
+    for (int i = 0; i < memmory->size_KB; i += shift_kb)
+    {
+        if (memmory->address[i] == -1)
+        {
+            for (int j = 0; j < shift_kb; j++)
+            {
+                memmory->address[i + j] = process->address[(page * shift_kb) + j];
+            }
+            return i / pages;
+        }
+    }
+    return frame;
+}
+
+bool empty_frame(int frame, memory_t *memmory)
+{
+    if (memmory == NULL)
+    {
+        return false;
+    }
+    return memmory->address[frame] == -1;
+}
+
+bool process_bool(int id, process_t *process)
+{
+    if (process == NULL)
+    {
+        return false;
+    }
+
+    process_t *tmp = process;
+    while (tmp != NULL)
+    {
+        if (tmp->id == id)
+        {
+            return true;
+        }
+        tmp = tmp->next_process;
+    }
+    return false;
+}
+// DATA STRUCTURE END
+
+void add_page(page_t *head, page_t *new_page)
+{
     page_t *current = head;
-    while (current->next_page != NULL) {
+    while (current->next_page != NULL)
+    {
         current = current->next_page;
     }
 
@@ -44,88 +114,107 @@ void add_page(page_t *head, page_t *new_page) {
     current->next_page->next_page = NULL;
 }
 
-bool add_process(unsigned int id, unsigned int tamanho_processo) {
-    bool processo_adicionado = false;
-    process_t *tmp_processo = (process_t *)malloc(sizeof(process_t));
-    page_t *tmp_paginas = NULL;
-    tmp_paginas = NULL;
+bool add_process(unsigned int id, unsigned int process_size)
+{
+    bool process_included = false;
+    process_t *temp_process = (process_t *)malloc(sizeof(process_t));
+    page_t *temp_pages = NULL;
+    temp_pages = NULL;
 
-    tmp_processo->id = id;
-    tmp_processo->size_in_bytes = tamanho_processo;
-    tmp_processo->p = count(BytesInKB(tamanho_processo) / page_size);
-    tmp_processo->d = count(page_size * 1024);
-    tmp_processo->address = malloc(kbInBytes(tamanho_processo) * sizeof(int));
+    temp_process->id = id;
+    temp_process->size_in_bytes = process_size;
+    temp_process->p = count(bytes_to_kb(process_size) / page_size);
+    temp_process->d = count(page_size * 1024);
+    temp_process->address = malloc(kb_to_bytes(process_size) * sizeof(int));
 
-    unsigned int t = BytesInKB(tamanho_processo);
+    unsigned int t = bytes_to_kb(process_size);
 
-    for (unsigned int z = 0; z < t; z++) {
-        tmp_processo->address[z] = rand() % (page_size * 1024);
+    for (unsigned int z = 0; z < t; z++)
+    {
+        temp_process->address[z] = rand() % (page_size * 1024);
     }
 
-    unsigned int paginas = BytesInKB(tmp_processo->size_in_bytes) / page_size;
+    unsigned int pages = bytes_to_kb(temp_process->size_in_bytes) / page_size;
 
-    for (unsigned int i = 0; i < paginas; i++) {
-        if (tmp_paginas == NULL) {
-            tmp_paginas = (page_t *)malloc(sizeof(page_t));
-            tmp_paginas->next_page = NULL;
-            tmp_paginas->page_number = i;
-            tmp_paginas->frame = inserirQuadro(i, tmp_processo, physical_memory);
-        } else {
-            page_t *teste_paginas = (page_t *)malloc(sizeof(page_t));
-            teste_paginas->next_page = NULL;
-            teste_paginas->page_number = i;
-            teste_paginas->frame = inserirQuadro(i, tmp_processo, physical_memory);
-            add_page(tmp_paginas, teste_paginas);
+    for (unsigned int i = 0; i < pages; i++)
+    {
+        if (temp_pages == NULL)
+        {
+            temp_pages = (page_t *)malloc(sizeof(page_t));
+            temp_pages->next_page = NULL;
+            temp_pages->page_number = i;
+            temp_pages->frame = insert_frame(i, temp_process, physical_memory);
+        }
+        else
+        {
+            page_t *test_pages = (page_t *)malloc(sizeof(page_t));
+            test_pages->next_page = NULL;
+            test_pages->page_number = i;
+            test_pages->frame = insert_frame(i, temp_process, physical_memory);
+            add_page(temp_pages, test_pages);
         }
     }
-    tmp_processo->table_pages = tmp_paginas;
+    temp_process->table_pages = temp_pages;
 
     // Verifica se existe process já criados
-    if (process == NULL) {
+    if (process == NULL)
+    {
         process = (process_t *)malloc(sizeof(process_t));
-        process = tmp_processo;
-    } else {
+        process = temp_process;
+    }
+    else
+    {
         process_t *current = process;
-        while (current->next_process != NULL) {
+        while (current->next_process != NULL)
+        {
             current = current->next_process;
         }
-        current->next_process = tmp_processo;
+        current->next_process = temp_process;
         current->next_process->next_process = NULL;
     }
-    return processo_adicionado = true;
+    return process_included = true;
 }
 
-void init_program() {
-    do {
+void init()
+{
+    do
+    {
         exit_menu = true;
 
-        if (physical_memory_size <= 0) {
+        if (physical_memory_size <= 0)
+        {
             input_memory_size();
             scanf("%d", &physical_memory_size);
-            if (!multiple(physical_memory_size, 2)) {
+            if (!multiple(physical_memory_size, 2))
+            {
                 physical_memory_size = 0;
                 exit_menu = false;
             }
         }
-        if (process_max_size <= 0) {
+        if (process_max_size <= 0)
+        {
             input_process_max_size();
             scanf("%d", &process_max_size);
-            if (!multiple(process_max_size, 2)) {
+            if (!multiple(process_max_size, 2))
+            {
                 process_max_size = 0;
                 exit_menu = false;
             }
         }
-        if (page_size <= 0) {
+        if (page_size <= 0)
+        {
             input_page_size();
             scanf("%d", &page_size);
-            if (!multiple(page_size, 2)) {
+            if (!multiple(page_size, 2))
+            {
                 process_max_size = 0;
                 exit_menu = false;
             }
         }
 
         // Metódo que inicia a memória física
-        if (page_size > 0 && process_max_size > 0 && physical_memory_size > 0) {
+        if (page_size > 0 && process_max_size > 0 && physical_memory_size > 0)
+        {
             physical_memory = (memory_t *)malloc(sizeof(memory_t));
             physical_memory->size_KB = physical_memory_size;
             physical_memory->frames_number = (physical_memory_size / page_size);
@@ -134,188 +223,155 @@ void init_program() {
             physical_memory->address = malloc(physical_memory->size_KB * sizeof(int));
             physical_memory->process_max_size = process_max_size;
 
-            for (unsigned int i = 0; i < physical_memory->size_KB; i++) {
+            for (unsigned int i = 0; i < physical_memory->size_KB; i++)
+            {
                 physical_memory->address[i] = -1;
             }
         }
 
     } while (!exit_menu);
-    reviewMenu(physical_memory_size, process_max_size, page_size);
+    view_menu(physical_memory_size, process_max_size, page_size);
 }
 
-void menu() {
+void menu()
+{
     print_screen();
-    do {
+    do
+    {
         exit_menu = false;
         int process_size = 0, process_id = 0;
         scanf("%c", &option);
-        switch (option) {
-            
-            case '1':
-                printf("\nVisualizar memória:\n");
-                viewMemory(physical_memory);
-                exit_menu = true;
-                menu();
-                break;
-            
-            case '2':;
-                exit_menu = true;
-                do {
-                    if (process_id == 0) {
-                        printf("Digite o id do processo\n");
-                        scanf("%d", &process_id);
-                    }
+        switch (option)
+        {
+        case '1':
+            printf("\nVisualizar memória:\n");
+            view_memory(physical_memory);
+            exit_menu = true;
+            menu();
+            break;
 
-                    if (process_size == 0) {
-                        printf("Digite o tamanho do processo: %d em bytes\n", process_id);
-                        scanf("%d", &process_size);
-                    }
-
-                    if (BytesInKB(process_size) > process_max_size) {
-                        printf("Processo %d, excede tamanho limite: %d Bytes\n", process_id, kbInBytes(process_max_size));
-                        process_size = 0;
-                        exit_menu = false;
-                    }
-                    if (process_bool(process_id, process)) {
+        case '2':;
+            exit_menu = true;
+            do
+            {
+                if (process_id == 0)
+                {
+                    printf("Digite o id do processo\n");
+                    scanf("%d", &process_id);
+                }
+                if (process_size == 0)
+                {
+                    printf("Digite o tamanho do processo: %d em bytes\n", process_id);
+                    scanf("%d", &process_size);
+                }
+                if (bytes_to_kb(process_size) > process_max_size)
+                {
+                    printf("Processo %d, excede tamanho limite: %d Bytes\n", process_id, kb_to_bytes(process_max_size));
+                    process_size = 0;
+                    exit_menu = false;
+                }
+                if (process_bool(process_id, process))
+                {
+                    exit_menu = true;
+                    printf("Processo %d, já existe\n", process_id);
+                    menu();
+                }
+                if (process_id > 0 && process_size > 0)
+                {
+                    if (add_process(process_id, process_size))
+                    {
                         exit_menu = true;
-                        printf("Processo %d, já existe\n", process_id);
+                        printf("Processo = %d Criado com sucesso\n\n", process_id);
                         menu();
                     }
-
-                    if (process_id > 0 && process_size > 0) {
-                        if (add_process(process_id, process_size)) {
-                            exit_menu = true;
-                            printf("Processo = %d Criado com sucesso\n\n", process_id);
-                            menu();
-                        }
-                    }
-                } while (!exit_menu);
-                break;
-            
-            case '3':;
-                process_number = 0, process_size = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0;
-                init_program();
-                break;
-            
-            case '4':
-                printf("Informe o número id do processo!!!\n");
-                scanf("%d", &process_id);
-                if (process_bool(process_id, process)) {
-                    viewTablePage(process_id, process, physical_memory);
-                } else {
-                    exit_menu = true;
-                    printf("Processo %d, não existe\n", process_id);
                 }
-                menu();
-                break;
-            default:
-                break;
+            } while (!exit_menu);
+            break;
+
+        case '3':;
+            process_number = 0, process_size = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0;
+            init();
+            break;
+
+        case '4':
+            printf("Informe o número id do processo!!!\n");
+            scanf("%d", &process_id);
+            if (process_bool(process_id, process))
+            {
+                view_table_page(process_id, process, physical_memory);
+            }
+            else
+            {
+                exit_menu = true;
+                printf("Processo %d, não existe\n", process_id);
+            }
+            menu();
+            break;
+        default:
+            break;
         }
 
     } while (option != '5');
 }
 
-// DATA STRUCTURE
-bool process_bool(int id, process_t *process) {
-    if (process == NULL) {
-        return false;
-    }
-
-    process_t *tmp = process;
-    while (tmp != NULL) {
-        if (tmp->id == id) {
-            return true;
-        }
-        tmp = tmp->next_process;
-    }
-    return false;
-}
-
-process_t *get_process(int id, process_t *process) {
-    if (process == NULL) {
-        return NULL;
-    }
-
-    process_t *tmp = process;
-    while (tmp != NULL) {
-        if (tmp->id == id) {
-            return tmp;
-        }
-        tmp = tmp->next_process;
-    }
-    return NULL;
-}
-
-bool quadroVazio(int frame, memory_t *memoria) {
-    if (memoria == NULL) {
-        return false;
-    }
-    return memoria->address[frame] == -1;
-}
-
-int inserirQuadro(int pagina, process_t *processo, memory_t *memoria) {
-    int frame = -1;
-    int paginas = memoria->size_KB / (int)pow(2, memoria->f);
-    int deslocamentoKB = (int)pow(2, processo->d) / 1024;
-    for (int i = 0; i < memoria->size_KB; i += deslocamentoKB) {
-        if (memoria->address[i] == -1) {
-            for (int j = 0; j < deslocamentoKB; j++) {
-                memoria->address[i + j] = processo->address[(pagina * deslocamentoKB) + j];
-            }
-            return i / paginas;
-        }
-    }
-    return frame;
-}
-
-
-// CALCS
-unsigned count(unsigned int number) {
+// CALCS START
+unsigned count(unsigned int number)
+{
     // Função de log na base 2
     // pegue apenas parte inteira
     return (int)log2(number);
 }
 
-bool multiple(unsigned int number, unsigned int mult) {
+bool multiple(unsigned int number, unsigned int mult)
+{
     return number % mult == 0;
 }
 
-unsigned int kbInBytes(int kb) {
+unsigned int kb_to_bytes(int kb)
+{
     return kb * 1000;
 }
 
-unsigned int BytesInKB(int bytes) {
+unsigned int bytes_to_kb(int bytes)
+{
     return bytes / 1000;
 }
+// CALCS END
 
-// INTERFACE
-void print_screen() {
+// INTERFACE START
+void print_screen()
+{
     printf("\n\n Menu:\n\n");
     printf(" 1. Visualizar memória.\n 2. Criar processo.\n 3. Finalizar processo:.\n 4. Visualizar tabela de páginas:.\n 5. Sair. \n");
 }
 
-void input_memory_size() {
+void input_memory_size()
+{
     printf("Informe o tamanho da memória física em KB\n");
 }
 
-void input_process_max_size() {
+void input_process_max_size()
+{
     printf("Informe o tamanho maxímo de processo em KB\n");
 }
 
-void input_page_size() {
+void input_page_size()
+{
     printf("Informe o tamanho da pagína KB\n");
 }
 
-void reviewMenu(unsigned int physical_memory_size, unsigned int process_max_size, unsigned int page_size) {
+void view_menu(unsigned int physical_memory_size, unsigned int process_max_size, unsigned int page_size)
+{
     printf("Tamanho da memória fisíca = %d Bits\n", physical_memory_size);
     printf("Tamanho Maxímo de um processo = %d\n", process_max_size);
     printf("Tamanho da pagína = %d\n", page_size);
 }
 
-
-void printBynary(int number, int deslocamento) {
+void printBynary(int number, int shift)
+{
     int c, k;
-    for (c = deslocamento; c >= 0; c--) {
+    for (c = shift; c >= 0; c--)
+    {
         k = number >> c;
 
         if (k & 1)
@@ -325,46 +381,56 @@ void printBynary(int number, int deslocamento) {
     }
 }
 
-void viewMemory(memory_t *physical_memory) {
+void view_memory(memory_t *physical_memory)
+{
     int page_size = physical_memory->size_KB / (int)pow(2, physical_memory->f);
     int total_bits = physical_memory->f + count(physical_memory->process_max_size / page_size);
 
     printf("Dado   -  Endereço\n");
     printf("                  \n");
-    for (int i = physical_memory->size_KB - 1; i > 0; i--) {
-        if (physical_memory->address[i] == -1) {
+    for (int i = physical_memory->size_KB - 1; i > 0; i--)
+    {
+        if (physical_memory->address[i] == -1)
+        {
             printf("vazio  -   ");
-        } else {
+        }
+        else
+        {
             printf(" %d  -   ", physical_memory->address[i]);
         }
         printBynary(i, total_bits - 1);
-        printf("\n");        
+        printf("\n");
     }
 }
 
-void viewTablePage(int number, process_t *process, memory_t *physical_memory) {
+void view_table_page(int number, process_t *process, memory_t *physical_memory)
+{
     process_t *tmp = get_process(number, process);
-    page_t *tmp_paginas = tmp->table_pages;
+    page_t *temp_pages = tmp->table_pages;
     printf("Tamanho do proceso: %d é de %d bytes\n", number, tmp->size_in_bytes);
-    int deslocamento_memoria = physical_memory->f - 1;
+    int shift_memo = physical_memory->f - 1;
 
     printf("Página - Quadro \n");
 
-    while (tmp_paginas != NULL) {
-        int vai_1 = tmp_paginas->page_number;
-        int vai_2 = tmp->p - 1;
-        int vai_3 = tmp_paginas->frame;
-        int vai_4 = deslocamento_memoria;
-        printBynary(vai_1, vai_2);
-        printBynary(vai_3, vai_4);
+    while (temp_pages != NULL)
+    {
+        int var_1 = temp_pages->page_number;
+        int var_2 = tmp->p - 1;
+        int var_3 = temp_pages->frame;
+        int var_4 = shift_memo;
+        printBynary(var_1, var_2);
+        printBynary(var_3, var_4);
         printf("\n");
-        tmp_paginas = tmp_paginas->next_page;
+        temp_pages = temp_pages->next_page;
     }
 }
+// INTERFACE END
 
-int main(int argc, char *argv[]) {
-    printf("Gerenciamento de Memória com Paginação\n");
-    init_program();
+int main(int argc, char *argv[])
+{
+    printf("GRUPO BRUNO ALEXANDRE E VINICIUS PIZETTA\n\n");
+    printf("Gerenciamento de Memória com Paginação.\n");
+    init();
     menu();
 
     return 0;
