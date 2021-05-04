@@ -41,9 +41,9 @@ typedef struct Memory {
 } memory_t;
 
 bool existeProcesso(int indentificador, process_t *processos);
-bool quadroVazio(int quadro, memory_t *memoria);
-int inserirQuadro(int pagina, process_t *processo, memory_t *memoria);
-process_t *pegarProcesso(int identificador, process_t *processos);
+bool quadroVazio(int quadro, memory_t *memory);
+int inserirQuadro(int pagina, process_t *processo, memory_t *memory);
+process_t *get_process(int identificador, process_t *processos);
 #endif
 
 unsigned count(unsigned int numero);

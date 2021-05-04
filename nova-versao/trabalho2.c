@@ -11,8 +11,8 @@
 
 page_t *first, *last;
 
-// Iniciando a lista de processos
-process_t *processos = NULL;
+// Iniciando a lista de process
+process_t *process = NULL;
 // Iniciando a memórica
 memory_t *physical_memory = NULL;
 char option;
@@ -31,7 +31,6 @@ int offset, pagefault = 0;
 int freeFrame = -1;
 
 volatile bool exit_menu;
-// pid_t pid;
 
 void adicionarPagina(page_t *head, page_t *new_page) {
     page_t *current = head;
@@ -82,12 +81,12 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
     }
     tmp_processo->tabela_paginas = tmp_paginas;
 
-    // Verifica se existe processos já criados
-    if (processos == NULL) {
-        processos = (process_t *)malloc(sizeof(process_t));
-        processos = tmp_processo;
+    // Verifica se existe process já criados
+    if (process == NULL) {
+        process = (process_t *)malloc(sizeof(process_t));
+        process = tmp_processo;
     } else {
-        process_t *current = processos;
+        process_t *current = process;
         while (current->proximoProcessso != NULL) {
             current = current->proximoProcessso;
         }
@@ -154,7 +153,7 @@ void menu() {
         switch (option) {
             
             case '1':
-                printf("Visualizar memória:\n");
+                printf("\nVisualizar memória:\n");
                 viewMemory(physical_memory);
                 exit_menu = true;
                 menu();
@@ -178,7 +177,7 @@ void menu() {
                         process_size = 0;
                         exit_menu = false;
                     }
-                    if (existeProcesso(process_id, processos)) {
+                    if (existeProcesso(process_id, process)) {
                         exit_menu = true;
                         printf("Processo %d, já existe\n", process_id);
                         menu();
@@ -202,8 +201,8 @@ void menu() {
             case '4':
                 printf("Informe o número indentificador do processo!!!\n");
                 scanf("%d", &process_id);
-                if (existeProcesso(process_id, processos)) {
-                    visualizarTabalePaginas(process_id, processos, physical_memory);
+                if (existeProcesso(process_id, process)) {
+                    visualizarTabalePaginas(process_id, process, physical_memory);
                 } else {
                     exit_menu = true;
                     printf("Processo %d, não existe\n", process_id);
@@ -220,12 +219,12 @@ void menu() {
 // ESTRUTURA DE DADOS
 
 
-bool existeProcesso(int identificador, process_t *processos) {
-    if (processos == NULL) {
+bool existeProcesso(int identificador, process_t *process) {
+    if (process == NULL) {
         return false;
     }
 
-    process_t *tmp = processos;
+    process_t *tmp = process;
     while (tmp != NULL) {
         if (tmp->identificador == identificador) {
             return true;
@@ -235,12 +234,12 @@ bool existeProcesso(int identificador, process_t *processos) {
     return false;
 }
 
-process_t *pegarProcesso(int identificador, process_t *processos) {
-    if (processos == NULL) {
+process_t *get_process(int identificador, process_t *process) {
+    if (process == NULL) {
         return NULL;
     }
 
-    process_t *tmp = processos;
+    process_t *tmp = process;
     while (tmp != NULL) {
         if (tmp->identificador == identificador) {
             return tmp;
@@ -295,8 +294,8 @@ unsigned int BytesInKB(int bytes) {
 
 // INTERFACE
 void print_screen() {
-    printf("Menu:\n\n");
-    printf("1. Visualizar memória.\n2. Criar processo.\n3. Finalizar processo:.\n4. Visualizar tabela de páginas:.\n5. Sair.\n");
+    printf("\n\n Menu:\n\n");
+    printf(" 1. Visualizar memória.\n 2. Criar processo.\n 3. Finalizar processo:.\n 4. Visualizar tabela de páginas:.\n 5. Sair. \n");
 }
 
 void input_memory_size() {
@@ -317,6 +316,7 @@ void reviewMenu(unsigned int physical_memory_size, unsigned int process_max_size
     printf("Tamanho da pagína = %d\n", page_size);
 }
 
+
 void printBynary(int numero, int deslocamento) {
     int c, k;
     for (c = deslocamento; c >= 0; c--) {
@@ -329,36 +329,28 @@ void printBynary(int numero, int deslocamento) {
     }
 }
 
-void imprimirBinarioTabela(int pagina2) {
-    int a[10], n, i;
-    n = pagina2;
-    for (i = 0; n > 0; i++) {
-        a[i] = n % 2;
-        n = n / 2;
-    }
-    for (i = i - 1; i >= 0; i--) {
-        printf("%d", a[i]);
-    }
-}
-
 void viewMemory(memory_t *physical_memory) {
     int page_size = physical_memory->size_KB / (int)pow(2, physical_memory->f);
     int total_bits = physical_memory->f + count(physical_memory->process_max_size / page_size);
 
-    printf("Endereço \n");
+    printf("  ");
+    printf("Data  - Adress  \n");
+    printf("                  \n");
     for (int i = physical_memory->size_KB - 1; i > 0; i--) {
         if (physical_memory->enderecos[i] == -1) {
-            printf("VAZIO");
+            printf("  VAZIO  ");
         } else {
-            printf(" %d ", physical_memory->enderecos[i]);
+            printf("   %d   ", physical_memory->enderecos[i]);
         }
-        printf("\n");
+        printf("   ");
         printBynary(i, total_bits - 1);
+        printf("   ");
+        printf("                    \n");        
     }
 }
 
-void visualizarTabalePaginas(int numero, process_t *processos, memory_t *physical_memory) {
-    process_t *tmp = pegarProcesso(numero, processos);
+void visualizarTabalePaginas(int numero, process_t *process, memory_t *physical_memory) {
+    process_t *tmp = get_process(numero, process);
     page_t *tmp_paginas = tmp->tabela_paginas;
     printf("Tamanho do proceso: %d é de %d bytes\n", numero, tmp->tamanho_bytes);
     int deslocamento_memoria = physical_memory->f - 1;
