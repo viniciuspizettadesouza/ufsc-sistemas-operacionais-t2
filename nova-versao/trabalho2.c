@@ -44,13 +44,13 @@ void add_page(page_t *head, page_t *new_page) {
     current->next_page->next_page = NULL;
 }
 
-bool add_process(unsigned int indentificador, unsigned int tamanho_processo) {
+bool add_process(unsigned int id, unsigned int tamanho_processo) {
     bool processo_adicionado = false;
     process_t *tmp_processo = (process_t *)malloc(sizeof(process_t));
     page_t *tmp_paginas = NULL;
     tmp_paginas = NULL;
 
-    tmp_processo->id = indentificador;
+    tmp_processo->id = id;
     tmp_processo->size_in_bytes = tamanho_processo;
     tmp_processo->p = count(BytesInKB(tamanho_processo) / page_size);
     tmp_processo->d = count(page_size * 1024);
@@ -198,7 +198,7 @@ void menu() {
                 break;
             
             case '4':
-                printf("Informe o número indentificador do processo!!!\n");
+                printf("Informe o número id do processo!!!\n");
                 scanf("%d", &process_id);
                 if (process_bool(process_id, process)) {
                     viewTablePage(process_id, process, physical_memory);
