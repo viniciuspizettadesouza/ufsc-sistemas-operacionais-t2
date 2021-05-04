@@ -24,7 +24,7 @@ typedef struct Processo {
 } processo_t;
 
 // MEMÓRIA FÍSICA
-typedef struct Memoria {
+typedef struct Memory {
     // Número de quadros
     int numero_quadros;
     // Bits de frames
@@ -32,22 +32,20 @@ typedef struct Memoria {
     // Bits de deslocamento
     int d;
     // Tamanho tototal de mémoria
-    int tamanho_KB;
-    // Tamanho da página
-    int tm_pagina;
+    int size_KB;
     // Tamano maximo processo
-    int tamanho_max_processo;
+    int process_max_size;
     // Array de Bytes de endereços
     int *enderecos;
-} memoria_t;
+} memory_t;
 
 bool existeProcesso(int indentificador, processo_t *processos);
-bool quadroVazio(int quadro, memoria_t *memoria);
-int inserirQuadro(int pagina, processo_t *processo, memoria_t *memoria);
+bool quadroVazio(int quadro, memory_t *memoria);
+int inserirQuadro(int pagina, processo_t *processo, memory_t *memoria);
 processo_t *pegarProcesso(int identificador, processo_t *processos);
 #endif
 
-unsigned contadorDeBits(unsigned int numero);
+unsigned count(unsigned int numero);
 bool multiploPorDois(unsigned int numero);
 unsigned int kbInBytes(int kb);
 unsigned int BytesInKB(int bytes);
@@ -58,5 +56,5 @@ void pegarTamanhoMaxProcesso();
 void pegarTamanhoMemFisica();
 void pegarTamanhoPagina();
 void imprimeResumoMenu1(unsigned int tam_memorica_fisica, unsigned int tam_max_processo, unsigned int tam_pagina);
-void visualizarMemoria(memoria_t *memoria_fisica);
-void visualizarTabalePaginas(int numero, processo_t *processos, memoria_t *memoria_fisica);
+void viewMemory(memory_t *memoria_fisica);
+void visualizarTabalePaginas(int numero, processo_t *processos, memory_t *memoria_fisica);

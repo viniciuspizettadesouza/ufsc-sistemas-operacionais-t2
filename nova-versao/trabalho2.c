@@ -14,7 +14,7 @@ pagina_t *primeira, *ultima, *paginas_logicas = NULL;
 // Iniciando a lista de processos
 processo_t *processos = NULL;
 // Iniciando a memórica
-memoria_t *memoria_fisica = NULL;
+memory_t *physical_memory = NULL;
 char opcao_menu;
 unsigned int num_processo = 0, tam_max_processo = 0, tam_memorica_fisica = 0, tam_pagina = 0, paginasUsadas = 0;
 
@@ -74,8 +74,8 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
 
     tmp_processo->identificador = indentificador;
     tmp_processo->tamanho_bytes = tamanho_processo;
-    tmp_processo->p = contadorDeBits(BytesInKB(tamanho_processo) / tam_pagina);
-    tmp_processo->d = contadorDeBits(tam_pagina * 1024);
+    tmp_processo->p = count(BytesInKB(tamanho_processo) / tam_pagina);
+    tmp_processo->d = count(tam_pagina * 1024);
     tmp_processo->enderecos = malloc(kbInBytes(tamanho_processo) * sizeof(int));
 
     unsigned int t = BytesInKB(tamanho_processo);
@@ -91,12 +91,12 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
             tmp_paginas = (pagina_t *)malloc(sizeof(pagina_t));
             tmp_paginas->proximaPagina = NULL;
             tmp_paginas->numeroPagina = i;
-            tmp_paginas->quadro = inserirQuadro(i, tmp_processo, memoria_fisica);
+            tmp_paginas->quadro = inserirQuadro(i, tmp_processo, physical_memory);
         } else {
             pagina_t *teste_paginas = (pagina_t *)malloc(sizeof(pagina_t));
             teste_paginas->proximaPagina = NULL;
             teste_paginas->numeroPagina = i;
-            teste_paginas->quadro = inserirQuadro(i, tmp_processo, memoria_fisica);
+            teste_paginas->quadro = inserirQuadro(i, tmp_processo, physical_memory);
             adicionarPagina(tmp_paginas, teste_paginas);
         }
     }
@@ -148,16 +148,16 @@ void iniciarPrograma() {
 
         // Metódo que inicia a memória física
         if (tam_pagina > 0 && tam_max_processo > 0 && tam_memorica_fisica > 0) {
-            memoria_fisica = (memoria_t *)malloc(sizeof(memoria_t));
-            memoria_fisica->tamanho_KB = tam_memorica_fisica;
-            memoria_fisica->numero_quadros = (tam_memorica_fisica / tam_pagina);
-            memoria_fisica->f = contadorDeBits(memoria_fisica->numero_quadros);
-            memoria_fisica->d = contadorDeBits(tam_pagina * 1024);
-            memoria_fisica->enderecos = malloc(memoria_fisica->tamanho_KB * sizeof(int));
-            memoria_fisica->tamanho_max_processo = tam_max_processo;
+            physical_memory = (memory_t *)malloc(sizeof(memory_t));
+            physical_memory->size_KB = tam_memorica_fisica;
+            physical_memory->numero_quadros = (tam_memorica_fisica / tam_pagina);
+            physical_memory->f = count(physical_memory->numero_quadros);
+            physical_memory->d = count(tam_pagina * 1024);
+            physical_memory->enderecos = malloc(physical_memory->size_KB * sizeof(int));
+            physical_memory->process_max_size = tam_max_processo;
 
-            for (unsigned int i = 0; i < memoria_fisica->tamanho_KB; i++) {
-                memoria_fisica->enderecos[i] = -1;
+            for (unsigned int i = 0; i < physical_memory->size_KB; i++) {
+                physical_memory->enderecos[i] = -1;
             }
         }
 
@@ -177,7 +177,7 @@ void menuPrograma() {
             case 'A':
                 limpaMenu();
                 printf("Visualizar memória:\n");
-                visualizarMemoria(memoria_fisica);
+                viewMemory(physical_memory);
                 sair_menu = true;
                 menuPrograma();
                 break;
@@ -185,7 +185,7 @@ void menuPrograma() {
                 printf("Informe o \033[1;34mnúmero\033[0m indentificador do processo!!!\n");
                 scanf("%d", &temp_indentificador);
                 if (existeProcesso(temp_indentificador, processos)) {
-                    visualizarTabalePaginas(temp_indentificador, processos, memoria_fisica);
+                    visualizarTabalePaginas(temp_indentificador, processos, physical_memory);
                 } else {
                     sair_menu = true;
                     limpaMenu();
@@ -276,18 +276,18 @@ processo_t *pegarProcesso(int identificador, processo_t *processos) {
     return NULL;
 }
 
-bool quadroVazio(int quadro, memoria_t *memoria) {
+bool quadroVazio(int quadro, memory_t *memoria) {
     if (memoria == NULL) {
         return false;
     }
     return memoria->enderecos[quadro] == -1;
 }
 
-int inserirQuadro(int pagina, processo_t *processo, memoria_t *memoria) {
+int inserirQuadro(int pagina, processo_t *processo, memory_t *memoria) {
     int quadro = -1;
-    int paginas = memoria->tamanho_KB / (int)pow(2, memoria->f);
+    int paginas = memoria->size_KB / (int)pow(2, memoria->f);
     int deslocamentoKB = (int)pow(2, processo->d) / 1024;
-    for (int i = 0; i < memoria->tamanho_KB; i += deslocamentoKB) {
+    for (int i = 0; i < memoria->size_KB; i += deslocamentoKB) {
         if (memoria->enderecos[i] == -1) {
             for (int j = 0; j < deslocamentoKB; j++) {
                 memoria->enderecos[i + j] = processo->enderecos[(pagina * deslocamentoKB) + j];
@@ -301,7 +301,7 @@ int inserirQuadro(int pagina, processo_t *processo, memoria_t *memoria) {
 
 // CALCS
 
-unsigned contadorDeBits(unsigned int numero) {
+unsigned count(unsigned int numero) {
     // Função de log na base 2
     // pegue apenas parte inteira
     return (int)log2(numero);
@@ -358,7 +358,7 @@ void imprimeResumoMenu1(unsigned int tam_memorica_fisica, unsigned int tam_max_p
     printf("Tamanho da pagína = \033[1;32m%d KB\033[0m\n\n", tam_pagina);
 }
 
-void imprimirBinario(int numero, int deslocamento) {
+void printBynary(int numero, int deslocamento) {
     int c, k;
     for (c = deslocamento; c >= 0; c--) {
         k = numero >> c;
@@ -382,45 +382,42 @@ void imprimirBinarioTabela(int pagina2) {
     }
 }
 
-void retornarPorcentagem(memoria_t *memoria_fisica) {
+void retornarPorcentagem(memory_t *physical_memory) {
     int livre = 0;
     float per;
-    for (int i = memoria_fisica->tamanho_KB - 1; i > 0; i--) {
-        if (memoria_fisica->enderecos[i] == -1) {
+    for (int i = physical_memory->size_KB - 1; i > 0; i--) {
+        if (physical_memory->enderecos[i] == -1) {
             livre++;
         }
     }
 
-    per = ((float)livre / memoria_fisica->tamanho_KB) * 100;
+    per = ((float)livre / physical_memory->size_KB) * 100;
     printf("\nPorcetagm de mememoria livre = \033[1;32m%.2f%% \033[0m\n", per);
 }
 
-void visualizarMemoria(memoria_t *memoria_fisica) {
-    int tamanho_pagina = memoria_fisica->tamanho_KB / (int)pow(2, memoria_fisica->f);
-    int total_bits = memoria_fisica->f + contadorDeBits(memoria_fisica->tamanho_max_processo / tamanho_pagina);
+void viewMemory(memory_t *physical_memory) {
+    int page_size = physical_memory->size_KB / (int)pow(2, physical_memory->f);
+    int total_bits = physical_memory->f + count(physical_memory->process_max_size / page_size);
 
-    printf("\n+-------+----------+\n");
-    printf("| Dado  | Endereço |\n");
-    printf("+-------+----------+\n");
-    for (int i = memoria_fisica->tamanho_KB - 1; i > 0; i--) {
-        if (memoria_fisica->enderecos[i] == -1) {
+   
+    printf("Dado - Endereço\n");
+    for (int i = physical_memory->size_KB - 1; i > 0; i--) {
+        if (physical_memory->enderecos[i] == -1) {
             printf("| VAZIO |");
         } else {
-            printf("|  %d  |", memoria_fisica->enderecos[i]);
+            printf("|  %d  |", physical_memory->enderecos[i]);
         }
-        printf("   ");
-        imprimirBinario(i, total_bits - 1);
-        printf("  |\n");
-        printf("+-------+----------+\n");
+        printf("\n");
+        printBynary(i, total_bits - 1);
     }
-    retornarPorcentagem(memoria_fisica);
+    retornarPorcentagem(physical_memory);
 }
 
-void visualizarTabalePaginas(int numero, processo_t *processos, memoria_t *memoria_fisica) {
+void visualizarTabalePaginas(int numero, processo_t *processos, memory_t *physical_memory) {
     processo_t *tmp = pegarProcesso(numero, processos);
     pagina_t *tmp_paginas = tmp->tabela_paginas;
     printf("Tamanho do proceso:\033[1;32m %d\033[0m é de \033[1;34m %d bytes\033[0m!!!\n", numero, tmp->tamanho_bytes);
-    int deslocamento_memoria = memoria_fisica->f - 1;
+    int deslocamento_memoria = physical_memory->f - 1;
 
     printf("\n+--------+--------+\n");
     printf("| Página | Quadro |\n");
@@ -431,9 +428,9 @@ void visualizarTabalePaginas(int numero, processo_t *processos, memoria_t *memor
         int vai_2 = tmp->p - 1;
         int vai_3 = tmp_paginas->quadro;
         int vai_4 = deslocamento_memoria;
-        imprimirBinario(vai_1, vai_2);
+        printBynary(vai_1, vai_2);
         printf("  |  ");
-        imprimirBinario(vai_3, vai_4);
+        printBynary(vai_3, vai_4);
         printf("   |\n");
         printf("+--------+--------+\n");
         tmp_paginas = tmp_paginas->proximaPagina;
