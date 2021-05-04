@@ -333,12 +333,11 @@ void viewMemory(memory_t *physical_memory) {
     int page_size = physical_memory->size_KB / (int)pow(2, physical_memory->f);
     int total_bits = physical_memory->f + count(physical_memory->process_max_size / page_size);
 
-    printf("  ");
-    printf("Data  - Adress  \n");
+    printf("Data   -  Adress\n");
     printf("                  \n");
     for (int i = physical_memory->size_KB - 1; i > 0; i--) {
         if (physical_memory->enderecos[i] == -1) {
-            printf("  VAZIO  ");
+            printf("VAZIO  -");
         } else {
             printf("   %d   ", physical_memory->enderecos[i]);
         }
