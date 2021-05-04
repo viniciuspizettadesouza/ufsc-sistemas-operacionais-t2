@@ -9,17 +9,14 @@
 #include "ArrayList.c"
 #include "trabalho2.h"
 
-pagina_t *primeira, *ultima, *paginas_logicas = NULL;
+pagina_t *first, *last;
 
 // Iniciando a lista de processos
 processo_t *processos = NULL;
 // Iniciando a memórica
 memory_t *physical_memory = NULL;
 char option;
-unsigned int num_processo = 0, tam_max_processo = 0, tam_memorica_fisica = 0, tam_pagina = 0, paginasUsadas = 0;
-
-// Número de paginas
-unsigned int num_paginas;
+unsigned int process_number = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0, used_pages = 0;
 
 // MEMÓRIA LÓGICA
 int p;  //	número da página: usado como um índice em uma tabela de página
@@ -41,16 +38,16 @@ void AdicionarPagina(int quadro) {
     atual->quadro = quadro;
     atual->proximaPagina = NULL;
 
-    if (paginasUsadas == 0) {
-        primeira = atual;
-        ultima = primeira;
+    if (used_pages == 0) {
+        first = atual;
+        last = first;
     } else {
-        ultima->proximaPagina = atual;
-        ultima = atual;
+        last->proximaPagina = atual;
+        last = atual;
     }
 
-    if (paginasUsadas < numero_quadros)
-        paginasUsadas++;
+    if (used_pages < numero_quadros)
+        used_pages++;
 }
 
 void adicionarPagina(pagina_t *head, pagina_t *nova_Paggina) {
@@ -74,17 +71,17 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
 
     tmp_processo->identificador = indentificador;
     tmp_processo->tamanho_bytes = tamanho_processo;
-    tmp_processo->p = count(BytesInKB(tamanho_processo) / tam_pagina);
-    tmp_processo->d = count(tam_pagina * 1024);
+    tmp_processo->p = count(BytesInKB(tamanho_processo) / page_size);
+    tmp_processo->d = count(page_size * 1024);
     tmp_processo->enderecos = malloc(kbInBytes(tamanho_processo) * sizeof(int));
 
     unsigned int t = BytesInKB(tamanho_processo);
 
     for (unsigned int z = 0; z < t; z++) {
-        tmp_processo->enderecos[z] = rand() % (tam_pagina * 1024);
+        tmp_processo->enderecos[z] = rand() % (page_size * 1024);
     }
 
-    unsigned int paginas = BytesInKB(tmp_processo->tamanho_bytes) / tam_pagina;
+    unsigned int paginas = BytesInKB(tmp_processo->tamanho_bytes) / page_size;
 
     for (unsigned int i = 0; i < paginas; i++) {
         if (tmp_paginas == NULL) {
@@ -117,44 +114,44 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
     return processo_adicionado = true;
 }
 
-void iniciarPrograma() {
+void init_program() {
     do {
         exit_menu = true;
 
-        if (tam_memorica_fisica <= 0) {
-            pegarTamanhoMemFisica();
-            scanf("%d", &tam_memorica_fisica);
-            if (!multiploPorDois(tam_memorica_fisica)) {
-                tam_memorica_fisica = 0;
+        if (physical_memory_size <= 0) {
+            input_memory_size();
+            scanf("%d", &physical_memory_size);
+            if (!multiple(physical_memory_size, 2)) {
+                physical_memory_size = 0;
                 exit_menu = false;
             }
         }
-        if (tam_max_processo <= 0) {
-            pegarTamanhoMaxProcesso();
-            scanf("%d", &tam_max_processo);
-            if (!multiploPorDois(tam_max_processo)) {
-                tam_max_processo = 0;
+        if (process_max_size <= 0) {
+            input_process_max_size();
+            scanf("%d", &process_max_size);
+            if (!multiple(process_max_size, 2)) {
+                process_max_size = 0;
                 exit_menu = false;
             }
         }
-        if (tam_pagina <= 0) {
-            pegarTamanhoPagina();
-            scanf("%d", &tam_pagina);
-            if (!multiploPorDois(tam_pagina)) {
-                tam_max_processo = 0;
+        if (page_size <= 0) {
+            input_page_size();
+            scanf("%d", &page_size);
+            if (!multiple(page_size, 2)) {
+                process_max_size = 0;
                 exit_menu = false;
             }
         }
 
         // Metódo que inicia a memória física
-        if (tam_pagina > 0 && tam_max_processo > 0 && tam_memorica_fisica > 0) {
+        if (page_size > 0 && process_max_size > 0 && physical_memory_size > 0) {
             physical_memory = (memory_t *)malloc(sizeof(memory_t));
-            physical_memory->size_KB = tam_memorica_fisica;
-            physical_memory->numero_quadros = (tam_memorica_fisica / tam_pagina);
+            physical_memory->size_KB = physical_memory_size;
+            physical_memory->numero_quadros = (physical_memory_size / page_size);
             physical_memory->f = count(physical_memory->numero_quadros);
-            physical_memory->d = count(tam_pagina * 1024);
+            physical_memory->d = count(page_size * 1024);
             physical_memory->enderecos = malloc(physical_memory->size_KB * sizeof(int));
-            physical_memory->process_max_size = tam_max_processo;
+            physical_memory->process_max_size = process_max_size;
 
             for (unsigned int i = 0; i < physical_memory->size_KB; i++) {
                 physical_memory->enderecos[i] = -1;
@@ -162,7 +159,7 @@ void iniciarPrograma() {
         }
 
     } while (!exit_menu);
-    imprimeResumoMenu1(tam_memorica_fisica, tam_max_processo, tam_pagina);
+    imprimeResumoMenu1(physical_memory_size, process_max_size, page_size);
 }
 
 void menu() {
@@ -202,8 +199,8 @@ void menu() {
                         scanf("%d", &process_size);
                     }
 
-                    if (BytesInKB(process_size) > tam_max_processo) {
-                        printf("[ERROR]:Processo \033[1;32m%d\033[0m, excede \033[1;31mtamanho limite: %d Bytes\033[0m!!!\n", temp_indentificador, kbInBytes(tam_max_processo));
+                    if (BytesInKB(process_size) > process_max_size) {
+                        printf("[ERROR]:Processo \033[1;32m%d\033[0m, excede \033[1;31mtamanho limite: %d Bytes\033[0m!!!\n", temp_indentificador, kbInBytes(process_max_size));
                         process_size = 0;
                         exit_menu = false;
                     }
@@ -223,8 +220,8 @@ void menu() {
                 } while (!exit_menu);
                 break;
             case '4':
-                num_processo = 0, process_size = 0, tam_max_processo = 0, tam_memorica_fisica = 0, tam_pagina = 0;
-                iniciarPrograma();
+                process_number = 0, process_size = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0;
+                init_program();
                 break;
 
             default:
@@ -298,8 +295,8 @@ unsigned count(unsigned int numero) {
     return (int)log2(numero);
 }
 
-bool multiploPorDois(unsigned int numero) {
-    return numero % 2 == 0;
+bool multiple(unsigned int number, unsigned int mult) {
+    return number % mult == 0;
 }
 
 unsigned int kbInBytes(int kb) {
@@ -316,22 +313,22 @@ void print_screen() {
     printf("1. Visualizar memória.\n2. Criar processo.\n3. Visualizar tabela de páginas:.\n4. Reinicar programa:.\n5. Sair.\n");
 }
 
-void pegarTamanhoMemFisica() {
+void input_memory_size() {
     printf("Informe o tamanho da memória física em \033[1;33mKB\033[0m!!!\n");
 }
 
-void pegarTamanhoMaxProcesso() {
+void input_process_max_size() {
     printf("Informe o tamanho maxímo de processo em \033[1;33mKB\033[0m!!!\n");
 }
 
-void pegarTamanhoPagina() {
+void input_page_size() {
     printf("Informe o tamanho da pagína \033[1;33mKB\033[0m!!!\n");
 }
 
-void imprimeResumoMenu1(unsigned int tam_memorica_fisica, unsigned int tam_max_processo, unsigned int tam_pagina) {
-    printf("Tamanho da memória fisíca = \033[1;32m%d Bits \033[0m\n", tam_memorica_fisica);
-    printf("Tamanho Maxímo de um processo = \033[1;32m%d KB\033[0m\n", tam_max_processo);
-    printf("Tamanho da pagína = \033[1;32m%d KB\033[0m\n\n", tam_pagina);
+void imprimeResumoMenu1(unsigned int physical_memory_size, unsigned int process_max_size, unsigned int page_size) {
+    printf("Tamanho da memória fisíca = %d Bits\n", physical_memory_size);
+    printf("Tamanho Maxímo de um processo = %d\n", process_max_size);
+    printf("Tamanho da pagína = %d\n", page_size);
 }
 
 void printBynary(int numero, int deslocamento) {
@@ -400,7 +397,7 @@ void visualizarTabalePaginas(int numero, processo_t *processos, memory_t *physic
 
 int main(int argc, char *argv[]) {
     printf("Gerenciamento de Memória com Paginação!!!\n");
-    iniciarPrograma();
+    init_program();
     menu();
 
     return 0;

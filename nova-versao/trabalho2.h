@@ -46,14 +46,14 @@ processo_t *pegarProcesso(int identificador, processo_t *processos);
 #endif
 
 unsigned count(unsigned int numero);
-bool multiploPorDois(unsigned int numero);
+bool multiple(unsigned int number, unsigned int mult);
 unsigned int kbInBytes(int kb);
 unsigned int BytesInKB(int bytes);
 
 void print_screen();
-void pegarTamanhoMaxProcesso();
-void pegarTamanhoMemFisica();
-void pegarTamanhoPagina();
+void input_process_max_size();
+void input_memory_size();
+void input_page_size();
 void imprimeResumoMenu1(unsigned int tam_memorica_fisica, unsigned int tam_max_processo, unsigned int tam_pagina);
-void viewMemory(memory_t *memoria_fisica);
-void visualizarTabalePaginas(int numero, processo_t *processos, memory_t *memoria_fisica);
+void viewMemory(memory_t *physical_memory);
+void visualizarTabalePaginas(int numero, processo_t *processos, memory_t *physical_memory);
