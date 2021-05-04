@@ -50,8 +50,7 @@ bool multiploPorDois(unsigned int numero);
 unsigned int kbInBytes(int kb);
 unsigned int BytesInKB(int bytes);
 
-void imprimirMenu();
-void limpaMenu();
+void print_screen();
 void pegarTamanhoMaxProcesso();
 void pegarTamanhoMemFisica();
 void pegarTamanhoPagina();
