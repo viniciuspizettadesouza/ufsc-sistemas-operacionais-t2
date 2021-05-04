@@ -2,12 +2,13 @@
 #include <stdio.h>
 #ifndef A_H_INCLUDED
 #define A_H_INCLUDED
+
 typedef struct Paginas {
     int quadro;
-    int numeroPagina;
-    struct Paginas *proximaPagina;
+    int page_number;
+    struct Paginas *next_page;
 
-} pagina_t;
+} page_t;
 
 // Estrutura do processo
 typedef struct Processo {
@@ -21,7 +22,7 @@ typedef struct Processo {
     struct Paginas *tabela_paginas;
     int *enderecos;
 
-} processo_t;
+} process_t;
 
 // MEMÓRIA FÍSICA
 typedef struct Memory {
@@ -39,10 +40,10 @@ typedef struct Memory {
     int *enderecos;
 } memory_t;
 
-bool existeProcesso(int indentificador, processo_t *processos);
+bool existeProcesso(int indentificador, process_t *processos);
 bool quadroVazio(int quadro, memory_t *memoria);
-int inserirQuadro(int pagina, processo_t *processo, memory_t *memoria);
-processo_t *pegarProcesso(int identificador, processo_t *processos);
+int inserirQuadro(int pagina, process_t *processo, memory_t *memoria);
+process_t *pegarProcesso(int identificador, process_t *processos);
 #endif
 
 unsigned count(unsigned int numero);
@@ -56,4 +57,4 @@ void input_memory_size();
 void input_page_size();
 void reviewMenu(unsigned int tam_memorica_fisica, unsigned int tam_max_processo, unsigned int tam_pagina);
 void viewMemory(memory_t *physical_memory);
-void visualizarTabalePaginas(int numero, processo_t *processos, memory_t *physical_memory);
+void visualizarTabalePaginas(int numero, process_t *processos, memory_t *physical_memory);
