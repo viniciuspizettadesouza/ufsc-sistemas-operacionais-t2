@@ -25,7 +25,7 @@ int d;  //	page-offset (Deslocamento)
 // MEMÓRIA FÍSICA
 int f;                  //	Número do quadro: endereço básico de cada página na memória física
 int numero_quadros;     // Memória física onde o quadro 0 vai dos quadros [0] aos quadros [X]
-int tabela_paginas[1];  // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada quadro de 0 a X
+int table_pages[1];  // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada quadro de 0 a X
 int start, current;
 int offset, pagefault = 0;
 int freeFrame = -1;
@@ -51,19 +51,19 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
     page_t *tmp_paginas = NULL;
     tmp_paginas = NULL;
 
-    tmp_processo->identificador = indentificador;
-    tmp_processo->tamanho_bytes = tamanho_processo;
+    tmp_processo->id = indentificador;
+    tmp_processo->size_in_bytes = tamanho_processo;
     tmp_processo->p = count(BytesInKB(tamanho_processo) / page_size);
     tmp_processo->d = count(page_size * 1024);
-    tmp_processo->enderecos = malloc(kbInBytes(tamanho_processo) * sizeof(int));
+    tmp_processo->address = malloc(kbInBytes(tamanho_processo) * sizeof(int));
 
     unsigned int t = BytesInKB(tamanho_processo);
 
     for (unsigned int z = 0; z < t; z++) {
-        tmp_processo->enderecos[z] = rand() % (page_size * 1024);
+        tmp_processo->address[z] = rand() % (page_size * 1024);
     }
 
-    unsigned int paginas = BytesInKB(tmp_processo->tamanho_bytes) / page_size;
+    unsigned int paginas = BytesInKB(tmp_processo->size_in_bytes) / page_size;
 
     for (unsigned int i = 0; i < paginas; i++) {
         if (tmp_paginas == NULL) {
@@ -79,7 +79,7 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
             adicionarPagina(tmp_paginas, teste_paginas);
         }
     }
-    tmp_processo->tabela_paginas = tmp_paginas;
+    tmp_processo->table_pages = tmp_paginas;
 
     // Verifica se existe process já criados
     if (process == NULL) {
@@ -87,11 +87,11 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
         process = tmp_processo;
     } else {
         process_t *current = process;
-        while (current->proximoProcessso != NULL) {
-            current = current->proximoProcessso;
+        while (current->next_process != NULL) {
+            current = current->next_process;
         }
-        current->proximoProcessso = tmp_processo;
-        current->proximoProcessso->proximoProcessso = NULL;
+        current->next_process = tmp_processo;
+        current->next_process->next_process = NULL;
     }
     return processo_adicionado = true;
 }
@@ -132,11 +132,11 @@ void init_program() {
             physical_memory->numero_quadros = (physical_memory_size / page_size);
             physical_memory->f = count(physical_memory->numero_quadros);
             physical_memory->d = count(page_size * 1024);
-            physical_memory->enderecos = malloc(physical_memory->size_KB * sizeof(int));
+            physical_memory->address = malloc(physical_memory->size_KB * sizeof(int));
             physical_memory->process_max_size = process_max_size;
 
             for (unsigned int i = 0; i < physical_memory->size_KB; i++) {
-                physical_memory->enderecos[i] = -1;
+                physical_memory->address[i] = -1;
             }
         }
 
@@ -177,7 +177,7 @@ void menu() {
                         process_size = 0;
                         exit_menu = false;
                     }
-                    if (existeProcesso(process_id, process)) {
+                    if (process_bool(process_id, process)) {
                         exit_menu = true;
                         printf("Processo %d, já existe\n", process_id);
                         menu();
@@ -201,8 +201,8 @@ void menu() {
             case '4':
                 printf("Informe o número indentificador do processo!!!\n");
                 scanf("%d", &process_id);
-                if (existeProcesso(process_id, process)) {
-                    visualizarTabalePaginas(process_id, process, physical_memory);
+                if (process_bool(process_id, process)) {
+                    viewTablePage(process_id, process, physical_memory);
                 } else {
                     exit_menu = true;
                     printf("Processo %d, não existe\n", process_id);
@@ -219,32 +219,32 @@ void menu() {
 // ESTRUTURA DE DADOS
 
 
-bool existeProcesso(int identificador, process_t *process) {
+bool process_bool(int id, process_t *process) {
     if (process == NULL) {
         return false;
     }
 
     process_t *tmp = process;
     while (tmp != NULL) {
-        if (tmp->identificador == identificador) {
+        if (tmp->id == id) {
             return true;
         }
-        tmp = tmp->proximoProcessso;
+        tmp = tmp->next_process;
     }
     return false;
 }
 
-process_t *get_process(int identificador, process_t *process) {
+process_t *get_process(int id, process_t *process) {
     if (process == NULL) {
         return NULL;
     }
 
     process_t *tmp = process;
     while (tmp != NULL) {
-        if (tmp->identificador == identificador) {
+        if (tmp->id == id) {
             return tmp;
         }
-        tmp = tmp->proximoProcessso;
+        tmp = tmp->next_process;
     }
     return NULL;
 }
@@ -253,7 +253,7 @@ bool quadroVazio(int quadro, memory_t *memoria) {
     if (memoria == NULL) {
         return false;
     }
-    return memoria->enderecos[quadro] == -1;
+    return memoria->address[quadro] == -1;
 }
 
 int inserirQuadro(int pagina, process_t *processo, memory_t *memoria) {
@@ -261,9 +261,9 @@ int inserirQuadro(int pagina, process_t *processo, memory_t *memoria) {
     int paginas = memoria->size_KB / (int)pow(2, memoria->f);
     int deslocamentoKB = (int)pow(2, processo->d) / 1024;
     for (int i = 0; i < memoria->size_KB; i += deslocamentoKB) {
-        if (memoria->enderecos[i] == -1) {
+        if (memoria->address[i] == -1) {
             for (int j = 0; j < deslocamentoKB; j++) {
-                memoria->enderecos[i + j] = processo->enderecos[(pagina * deslocamentoKB) + j];
+                memoria->address[i + j] = processo->address[(pagina * deslocamentoKB) + j];
             }
             return i / paginas;
         }
@@ -274,10 +274,10 @@ int inserirQuadro(int pagina, process_t *processo, memory_t *memoria) {
 
 // CALCS
 
-unsigned count(unsigned int numero) {
+unsigned count(unsigned int number) {
     // Função de log na base 2
     // pegue apenas parte inteira
-    return (int)log2(numero);
+    return (int)log2(number);
 }
 
 bool multiple(unsigned int number, unsigned int mult) {
@@ -317,10 +317,10 @@ void reviewMenu(unsigned int physical_memory_size, unsigned int process_max_size
 }
 
 
-void printBynary(int numero, int deslocamento) {
+void printBynary(int number, int deslocamento) {
     int c, k;
     for (c = deslocamento; c >= 0; c--) {
-        k = numero >> c;
+        k = number >> c;
 
         if (k & 1)
             printf("1");
@@ -336,10 +336,10 @@ void viewMemory(memory_t *physical_memory) {
     printf("Data   -  Adress\n");
     printf("                  \n");
     for (int i = physical_memory->size_KB - 1; i > 0; i--) {
-        if (physical_memory->enderecos[i] == -1) {
+        if (physical_memory->address[i] == -1) {
             printf("VAZIO  -");
         } else {
-            printf("   %d   ", physical_memory->enderecos[i]);
+            printf("   %d   ", physical_memory->address[i]);
         }
         printf("   ");
         printBynary(i, total_bits - 1);
@@ -348,10 +348,10 @@ void viewMemory(memory_t *physical_memory) {
     }
 }
 
-void visualizarTabalePaginas(int numero, process_t *process, memory_t *physical_memory) {
-    process_t *tmp = get_process(numero, process);
-    page_t *tmp_paginas = tmp->tabela_paginas;
-    printf("Tamanho do proceso: %d é de %d bytes\n", numero, tmp->tamanho_bytes);
+void viewTablePage(int number, process_t *process, memory_t *physical_memory) {
+    process_t *tmp = get_process(number, process);
+    page_t *tmp_paginas = tmp->table_pages;
+    printf("Tamanho do proceso: %d é de %d bytes\n", number, tmp->size_in_bytes);
     int deslocamento_memoria = physical_memory->f - 1;
 
     printf("Página - Quadro \n");

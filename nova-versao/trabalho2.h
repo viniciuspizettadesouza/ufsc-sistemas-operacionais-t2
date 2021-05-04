@@ -3,25 +3,23 @@
 #ifndef A_H_INCLUDED
 #define A_H_INCLUDED
 
-typedef struct Paginas {
+typedef struct Pages {
     int quadro;
     int page_number;
-    struct Paginas *next_page;
-
+    struct Pages *next_page;
 } page_t;
 
 // Estrutura do processo
-typedef struct Processo {
-    int identificador;
-    int tamanho_bytes;
+typedef struct Process {
+    int id;
+    int size_in_bytes;
     // Bits de pagína
     int p;
     // Bits de deslocamento
     int d;
-    struct Processo *proximoProcessso;
-    struct Paginas *tabela_paginas;
-    int *enderecos;
-
+    struct Process *next_process;
+    struct Pages *table_pages;
+    int *address;
 } process_t;
 
 // MEMÓRIA FÍSICA
@@ -34,19 +32,19 @@ typedef struct Memory {
     int d;
     // Tamanho tototal de mémoria
     int size_KB;
-    // Tamano maximo processo
+    // Tamano maximo Process
     int process_max_size;
     // Array de Bytes de endereços
-    int *enderecos;
+    int *address;
 } memory_t;
 
-bool existeProcesso(int indentificador, process_t *processos);
+bool process_bool(int indentificador, process_t *processos);
 bool quadroVazio(int quadro, memory_t *memory);
 int inserirQuadro(int pagina, process_t *processo, memory_t *memory);
-process_t *get_process(int identificador, process_t *processos);
+process_t *get_process(int id, process_t *processos);
 #endif
 
-unsigned count(unsigned int numero);
+unsigned count(unsigned int number);
 bool multiple(unsigned int number, unsigned int mult);
 unsigned int kbInBytes(int kb);
 unsigned int BytesInKB(int bytes);
@@ -55,6 +53,6 @@ void print_screen();
 void input_process_max_size();
 void input_memory_size();
 void input_page_size();
-void reviewMenu(unsigned int tam_memorica_fisica, unsigned int tam_max_processo, unsigned int tam_pagina);
+void reviewMenu(unsigned int physical_memory_size, unsigned int process_max_size, unsigned int page_size);
 void viewMemory(memory_t *physical_memory);
-void visualizarTabalePaginas(int numero, process_t *processos, memory_t *physical_memory);
+void viewTablePage(int number, process_t *processos, memory_t *physical_memory);

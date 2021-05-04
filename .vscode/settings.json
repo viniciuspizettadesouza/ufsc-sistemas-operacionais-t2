@@ -4,6 +4,7 @@
         "calculos.h": "c",
         "ctype.h": "c",
         "estrutaradedados.h": "c",
-        "interfaceusuario.h": "c"
+        "interfaceusuario.h": "c",
+        "limits": "c"
     }
 }
