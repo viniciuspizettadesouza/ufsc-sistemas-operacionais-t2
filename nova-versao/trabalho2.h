@@ -1,10 +1,8 @@
 #include <stdbool.h>
 #include <stdio.h>
-#ifndef A_H_INCLUDED
-#define A_H_INCLUDED
 
 typedef struct Pages {
-    int quadro;
+    int frame;
     int page_number;
     struct Pages *next_page;
 } page_t;
@@ -25,7 +23,7 @@ typedef struct Process {
 // MEMÓRIA FÍSICA
 typedef struct Memory {
     // Número de quadros
-    int numero_quadros;
+    int frames_number;
     // Bits de frames
     int f;
     // Bits de deslocamento
@@ -39,10 +37,9 @@ typedef struct Memory {
 } memory_t;
 
 bool process_bool(int indentificador, process_t *processos);
-bool quadroVazio(int quadro, memory_t *memory);
+bool quadroVazio(int frame, memory_t *memory);
 int inserirQuadro(int pagina, process_t *processo, memory_t *memory);
 process_t *get_process(int id, process_t *processos);
-#endif
 
 unsigned count(unsigned int number);
 bool multiple(unsigned int number, unsigned int mult);

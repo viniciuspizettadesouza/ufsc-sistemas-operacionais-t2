@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "limits": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "unistd.h": "c",
+        "trabalho2.h": "c"
     }
 }

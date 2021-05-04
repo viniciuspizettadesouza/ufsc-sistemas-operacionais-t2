@@ -23,29 +23,28 @@ int p;  //	número da página: usado como um índice em uma tabela de página
 int d;  //	page-offset (Deslocamento)
 
 // MEMÓRIA FÍSICA
-int f;                  //	Número do quadro: endereço básico de cada página na memória física
-int numero_quadros;     // Memória física onde o quadro 0 vai dos quadros [0] aos quadros [X]
-int table_pages[1];  // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada quadro de 0 a X
+int f;                  // Número do frame: endereço básico de cada página na memória física
+int frames_number;      // Memória física onde o frame 0 vai dos quadros [0] aos quadros [X]
+int table_pages[1];     // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada frame de 0 a X
 int start, current;
 int offset, pagefault = 0;
 int freeFrame = -1;
 
 volatile bool exit_menu;
 
-void adicionarPagina(page_t *head, page_t *new_page) {
+void add_page(page_t *head, page_t *new_page) {
     page_t *current = head;
     while (current->next_page != NULL) {
         current = current->next_page;
     }
 
-    /* now we can add a new variable */
     current->next_page = (page_t *)malloc(sizeof(page_t));
     current->next_page->page_number = new_page->page_number;
-    current->next_page->quadro = new_page->quadro;
+    current->next_page->frame = new_page->frame;
     current->next_page->next_page = NULL;
 }
 
-bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_processo) {
+bool add_process(unsigned int indentificador, unsigned int tamanho_processo) {
     bool processo_adicionado = false;
     process_t *tmp_processo = (process_t *)malloc(sizeof(process_t));
     page_t *tmp_paginas = NULL;
@@ -70,13 +69,13 @@ bool adicionarProcesso(unsigned int indentificador, unsigned int tamanho_process
             tmp_paginas = (page_t *)malloc(sizeof(page_t));
             tmp_paginas->next_page = NULL;
             tmp_paginas->page_number = i;
-            tmp_paginas->quadro = inserirQuadro(i, tmp_processo, physical_memory);
+            tmp_paginas->frame = inserirQuadro(i, tmp_processo, physical_memory);
         } else {
             page_t *teste_paginas = (page_t *)malloc(sizeof(page_t));
             teste_paginas->next_page = NULL;
             teste_paginas->page_number = i;
-            teste_paginas->quadro = inserirQuadro(i, tmp_processo, physical_memory);
-            adicionarPagina(tmp_paginas, teste_paginas);
+            teste_paginas->frame = inserirQuadro(i, tmp_processo, physical_memory);
+            add_page(tmp_paginas, teste_paginas);
         }
     }
     tmp_processo->table_pages = tmp_paginas;
@@ -129,8 +128,8 @@ void init_program() {
         if (page_size > 0 && process_max_size > 0 && physical_memory_size > 0) {
             physical_memory = (memory_t *)malloc(sizeof(memory_t));
             physical_memory->size_KB = physical_memory_size;
-            physical_memory->numero_quadros = (physical_memory_size / page_size);
-            physical_memory->f = count(physical_memory->numero_quadros);
+            physical_memory->frames_number = (physical_memory_size / page_size);
+            physical_memory->f = count(physical_memory->frames_number);
             physical_memory->d = count(page_size * 1024);
             physical_memory->address = malloc(physical_memory->size_KB * sizeof(int));
             physical_memory->process_max_size = process_max_size;
@@ -184,7 +183,7 @@ void menu() {
                     }
 
                     if (process_id > 0 && process_size > 0) {
-                        if (adicionarProcesso(process_id, process_size)) {
+                        if (add_process(process_id, process_size)) {
                             exit_menu = true;
                             printf("Processo = %d Criado com sucesso\n\n", process_id);
                             menu();
@@ -216,9 +215,7 @@ void menu() {
     } while (option != '5');
 }
 
-// ESTRUTURA DE DADOS
-
-
+// DATA STRUCTURE
 bool process_bool(int id, process_t *process) {
     if (process == NULL) {
         return false;
@@ -249,15 +246,15 @@ process_t *get_process(int id, process_t *process) {
     return NULL;
 }
 
-bool quadroVazio(int quadro, memory_t *memoria) {
+bool quadroVazio(int frame, memory_t *memoria) {
     if (memoria == NULL) {
         return false;
     }
-    return memoria->address[quadro] == -1;
+    return memoria->address[frame] == -1;
 }
 
 int inserirQuadro(int pagina, process_t *processo, memory_t *memoria) {
-    int quadro = -1;
+    int frame = -1;
     int paginas = memoria->size_KB / (int)pow(2, memoria->f);
     int deslocamentoKB = (int)pow(2, processo->d) / 1024;
     for (int i = 0; i < memoria->size_KB; i += deslocamentoKB) {
@@ -268,12 +265,11 @@ int inserirQuadro(int pagina, process_t *processo, memory_t *memoria) {
             return i / paginas;
         }
     }
-    return quadro;
+    return frame;
 }
 
 
 // CALCS
-
 unsigned count(unsigned int number) {
     // Função de log na base 2
     // pegue apenas parte inteira
@@ -333,18 +329,16 @@ void viewMemory(memory_t *physical_memory) {
     int page_size = physical_memory->size_KB / (int)pow(2, physical_memory->f);
     int total_bits = physical_memory->f + count(physical_memory->process_max_size / page_size);
 
-    printf("Data   -  Adress\n");
+    printf("Dado   -  Endereço\n");
     printf("                  \n");
     for (int i = physical_memory->size_KB - 1; i > 0; i--) {
         if (physical_memory->address[i] == -1) {
-            printf("VAZIO  -");
+            printf("vazio  -   ");
         } else {
-            printf("   %d   ", physical_memory->address[i]);
+            printf(" %d  -   ", physical_memory->address[i]);
         }
-        printf("   ");
         printBynary(i, total_bits - 1);
-        printf("   ");
-        printf("                    \n");        
+        printf("\n");        
     }
 }
 
@@ -359,7 +353,7 @@ void viewTablePage(int number, process_t *process, memory_t *physical_memory) {
     while (tmp_paginas != NULL) {
         int vai_1 = tmp_paginas->page_number;
         int vai_2 = tmp->p - 1;
-        int vai_3 = tmp_paginas->quadro;
+        int vai_3 = tmp_paginas->frame;
         int vai_4 = deslocamento_memoria;
         printBynary(vai_1, vai_2);
         printBynary(vai_3, vai_4);
