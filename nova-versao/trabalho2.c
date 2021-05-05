@@ -291,8 +291,7 @@ void menu()
             break;
 
         case '3':;
-            process_number = 0, process_size = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0;
-            init();
+            printf("Metodo nao implementado");
             menu();
             break;
 
@@ -398,7 +397,6 @@ void view_table_page(int number, process_t *process, memory_t *physical_memory)
         printBynary(var_1, var_2); printf("  -  ");
         printBynary(var_3, var_4); printf("     \n");
         temp_pages = temp_pages->next_page;
-        
     }
 }
 

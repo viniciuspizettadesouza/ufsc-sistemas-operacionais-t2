@@ -8,27 +8,26 @@ typedef struct Pages
     struct Pages *next_page;
 } page_t;
 
-// Estrutura do processo
 typedef struct Process
 {
     int id;
-    int size_in_bytes; // Bits de pagina
+    int size_in_bytes;
     int p;
-    int d; // Bits de deslocamento
+    int d;
     struct Process *next_process;
     struct Pages *table_pages;
     int *address;
 } process_t;
 
-// MEMÓRIA FÍSICA
+
 typedef struct Memory
 {
-    int frames_number; // Número de quadros
-    int f; // Bits de frames
-    int d; // Bits de deslocamento
-    int size_KB; // Tamanho total de memoria
-    int process_max_size; // Tamanho maximo do processo
-    int *address; // Array de Bytes de endereços
+    int frames_number; 
+    int f;
+    int d;
+    int size_KB;
+    int process_max_size;
+    int *address;
 } memory_t;
 
 bool process_bool(int id, process_t *processos);
