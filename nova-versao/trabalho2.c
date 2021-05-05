@@ -407,9 +407,11 @@ void view_table_page(int number, process_t *process, memory_t *physical_memory)
     {
         printf("   ");
         int var_1 = temp_pages->page_number, var_2 = tmp->p - 1, var_3 = temp_pages->frame, var_4 = shift_memo;
-        printBynary(var_3, var_4); printf("     \n");
+
         printBynary(var_1, var_2); printf("  -  ");
+        printBynary(var_3, var_4); printf("     \n");
         temp_pages = temp_pages->next_page;
+        
     }
 }
 // INTERFACE END
