@@ -274,7 +274,7 @@ void menu()
                 }
                 if (process_size == 0)
                 {
-                    printf("Digite o tamanho do processo: %d em bytes\n", process_id);
+                    printf("Digite o tamanho do processo %d em bytes\n", process_id);
                     scanf("%d", &process_size);
                 }
                 if (bytes_to_kb(process_size) > process_max_size)
@@ -304,10 +304,11 @@ void menu()
         case '3':;
             process_number = 0, process_size = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0;
             init();
+            menu();
             break;
 
         case '4':
-            printf("Informe o numero id do processo!!!\n");
+            printf("Informe o numero id do processo\n");
             scanf("%d", &process_id);
             if (process_bool(process_id, process))
             {
@@ -316,7 +317,7 @@ void menu()
             else
             {
                 exit_menu = true;
-                printf("Processo %d, não existe\n", process_id);
+                printf("Processo %d, nao existe\n", process_id);
             }
             menu();
             break;
@@ -332,22 +333,22 @@ void menu()
 void print_screen()
 {
     printf("\n\n Menu:\n\n");
-    printf(" 1. Visualizar memoria.\n 2. Criar processo.\n 3. Finalizar processo:.\n 4. Visualizar tabela de paginas:.\n 5. Sair. \n");
+    printf(" 1. Visualizar memoria\n 2. Criar processo\n 3. Finalizar processo\n 4. Visualizar tabela de paginas\n 5. Sair \n");
 }
 
 void input_memory_size()
 {
-    printf("Informe o tamanho da memoria fisica em KB\n");
+    printf("Digite o tamanho da memoria fisica em KB\n");
 }
 
 void input_process_max_size()
 {
-    printf("Informe o tamanho maximo de processo em KB\n");
+    printf("Digite o tamanho maximo de processo em KB\n");
 }
 
 void input_page_size()
 {
-    printf("Informe o tamanho da pagina KB\n");
+    printf("Digite o tamanho da pagina KB\n");
 }
 
 void view_menu(unsigned int physical_memory_size, unsigned int process_max_size, unsigned int page_size)
@@ -397,20 +398,18 @@ void view_table_page(int number, process_t *process, memory_t *physical_memory)
 {
     process_t *tmp = get_process(number, process);
     page_t *temp_pages = tmp->table_pages;
-    printf("Tamanho do processo: %d é de %d bytes\n", number, tmp->size_in_bytes);
+    printf("Tamanho do processo: %d e de %d bytes\n", number, tmp->size_in_bytes);
     int shift_memo = physical_memory->f - 1;
 
     printf("Pagina - Quadro \n");
 
     while (temp_pages != NULL)
     {
-        int var_1 = temp_pages->page_number;
-        int var_2 = tmp->p - 1;
-        int var_3 = temp_pages->frame;
-        int var_4 = shift_memo;
+        int var_1 = temp_pages->page_number, var_2 = tmp->p - 1, var_3 = temp_pages->frame, var_4 = shift_memo;
+
         printBynary(var_1, var_2);
         printBynary(var_3, var_4);
-        printf("\n");
+        printf("3\n");
         temp_pages = temp_pages->next_page;
     }
 }
@@ -418,8 +417,8 @@ void view_table_page(int number, process_t *process, memory_t *physical_memory)
 
 int main(int argc, char *argv[])
 {
-    printf("GRUPO BRUNO ALEXANDRE E VINICIUS PIZETTA\n\n");
-    printf("Trabalho sobre Gerenciamento de Memoria usando Paginacao.\n");
+    printf("GRUPO - BRUNO ALEXANDRE E VINICIUS PIZETTA\n\n");
+    printf("Trabalho sobre Gerenciamento de Memoria usando Paginacao\n");
     init();
     menu();
 
