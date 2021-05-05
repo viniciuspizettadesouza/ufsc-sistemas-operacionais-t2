@@ -9,27 +9,24 @@
 #include "ArrayList.c"
 #include "trabalho2.h"
 
-// Iniciando a lista de process
+
 process_t *process = NULL;
-// Iniciando a memórica
 memory_t *physical_memory = NULL;
 char option;
 unsigned int process_number = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0;
 
-// MEMÓRIA LÓGICA
-int p; //	numero da pagina: usado como um índice em uma tabela de pagina
-int d; //	page-offset (Deslocamento)
+int p; 
+int d; 
 
-// MEMÓRIA FÍSICA
-int f;              // Número do frame: endereço básico de cada pagina na memoria fisica
-int frames_number;  // Memória fisica onde o frame 0 vai dos quadros [0] aos quadros [X]
-int table_pages[1]; // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada frame de 0 a X
+
+int f;             
+int frames_number;  
+int table_pages[1];
 int current;
 int pagefault = 0;
 
 volatile bool exit_menu;
 
-// DATA STRUCTURE START
 process_t *get_process(int id, process_t *process)
 {
     if (process == NULL)
@@ -86,13 +83,9 @@ bool process_bool(int id, process_t *process)
     }
     return false;
 }
-// DATA STRUCTURE END
 
-// CALCS START
 unsigned count(unsigned int number)
 {
-    // Função de log na base 2
-    // pegue apenas parte inteira
     return (int)log2(number);
 }
 
@@ -110,9 +103,7 @@ unsigned int bytes_to_kb(int bytes)
 {
     return bytes / 1000;
 }
-// CALCS END
 
-// METHODS START
 void add_page(page_t *head, page_t *new_page)
 {
     page_t *current = head;
@@ -169,7 +160,6 @@ bool add_process(unsigned int id, unsigned int process_size)
     }
     temp_process->table_pages = temp_pages;
 
-    // Verifica se existe process já criados
     if (process == NULL)
     {
         process = (process_t *)malloc(sizeof(process_t));
@@ -225,7 +215,6 @@ void init()
             }
         }
 
-        // Metódo que inicia a memoria fisica
         if (page_size > 0 && process_max_size > 0 && physical_memory_size > 0)
         {
             physical_memory = (memory_t *)malloc(sizeof(memory_t));
@@ -327,9 +316,7 @@ void menu()
 
     } while (option != '5');
 }
-// METHODS END
 
-// INTERFACE START
 void print_screen()
 {
     printf("\n\n Menu:\n\n");
@@ -414,7 +401,6 @@ void view_table_page(int number, process_t *process, memory_t *physical_memory)
         
     }
 }
-// INTERFACE END
 
 int main(int argc, char *argv[])
 {
