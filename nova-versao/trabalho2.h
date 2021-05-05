@@ -32,7 +32,6 @@ typedef struct Memory
 } memory_t;
 
 bool process_bool(int id, process_t *processos);
-bool empty_frame(int frame, memory_t *memory);
 int insert_frame(int pagina, process_t *processo, memory_t *memory);
 process_t *get_process(int id, process_t *processos);
 

@@ -9,26 +9,23 @@
 #include "ArrayList.c"
 #include "trabalho2.h"
 
-page_t *first, *last;
-
 // Iniciando a lista de process
 process_t *process = NULL;
 // Iniciando a memórica
 memory_t *physical_memory = NULL;
 char option;
-unsigned int process_number = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0, used_pages = 0;
+unsigned int process_number = 0, process_max_size = 0, physical_memory_size = 0, page_size = 0;
 
 // MEMÓRIA LÓGICA
-int p; //	número da página: usado como um índice em uma tabela de página
+int p; //	numero da pagina: usado como um índice em uma tabela de pagina
 int d; //	page-offset (Deslocamento)
 
 // MEMÓRIA FÍSICA
-int f;              // Número do frame: endereço básico de cada página na memória física
-int frames_number;  // Memória física onde o frame 0 vai dos quadros [0] aos quadros [X]
+int f;              // Número do frame: endereço básico de cada pagina na memoria fisica
+int frames_number;  // Memória fisica onde o frame 0 vai dos quadros [0] aos quadros [X]
 int table_pages[1]; // Uma entrada de sinalizador livre (-1) ou alocada (0) para cada frame de 0 a X
-int start, current;
-int offset, pagefault = 0;
-int freeFrame = -1;
+int current;
+int pagefault = 0;
 
 volatile bool exit_menu;
 
@@ -71,15 +68,6 @@ int insert_frame(int page, process_t *process, memory_t *memmory)
     return frame;
 }
 
-bool empty_frame(int frame, memory_t *memmory)
-{
-    if (memmory == NULL)
-    {
-        return false;
-    }
-    return memmory->address[frame] == -1;
-}
-
 bool process_bool(int id, process_t *process)
 {
     if (process == NULL)
@@ -100,6 +88,31 @@ bool process_bool(int id, process_t *process)
 }
 // DATA STRUCTURE END
 
+// CALCS START
+unsigned count(unsigned int number)
+{
+    // Função de log na base 2
+    // pegue apenas parte inteira
+    return (int)log2(number);
+}
+
+bool multiple(unsigned int number, unsigned int mult)
+{
+    return number % mult == 0;
+}
+
+unsigned int kb_to_bytes(int kb)
+{
+    return kb * 1000;
+}
+
+unsigned int bytes_to_kb(int bytes)
+{
+    return bytes / 1000;
+}
+// CALCS END
+
+// METHODS START
 void add_page(page_t *head, page_t *new_page)
 {
     page_t *current = head;
@@ -212,7 +225,7 @@ void init()
             }
         }
 
-        // Metódo que inicia a memória física
+        // Metódo que inicia a memoria fisica
         if (page_size > 0 && process_max_size > 0 && physical_memory_size > 0)
         {
             physical_memory = (memory_t *)malloc(sizeof(memory_t));
@@ -244,7 +257,7 @@ void menu()
         switch (option)
         {
         case '1':
-            printf("\nVisualizar memória:\n");
+            printf("\nVisualizar memoria:\n");
             view_memory(physical_memory);
             exit_menu = true;
             menu();
@@ -294,7 +307,7 @@ void menu()
             break;
 
         case '4':
-            printf("Informe o número id do processo!!!\n");
+            printf("Informe o numero id do processo!!!\n");
             scanf("%d", &process_id);
             if (process_bool(process_id, process))
             {
@@ -313,58 +326,35 @@ void menu()
 
     } while (option != '5');
 }
-
-// CALCS START
-unsigned count(unsigned int number)
-{
-    // Função de log na base 2
-    // pegue apenas parte inteira
-    return (int)log2(number);
-}
-
-bool multiple(unsigned int number, unsigned int mult)
-{
-    return number % mult == 0;
-}
-
-unsigned int kb_to_bytes(int kb)
-{
-    return kb * 1000;
-}
-
-unsigned int bytes_to_kb(int bytes)
-{
-    return bytes / 1000;
-}
-// CALCS END
+// METHODS END
 
 // INTERFACE START
 void print_screen()
 {
     printf("\n\n Menu:\n\n");
-    printf(" 1. Visualizar memória.\n 2. Criar processo.\n 3. Finalizar processo:.\n 4. Visualizar tabela de páginas:.\n 5. Sair. \n");
+    printf(" 1. Visualizar memoria.\n 2. Criar processo.\n 3. Finalizar processo:.\n 4. Visualizar tabela de paginas:.\n 5. Sair. \n");
 }
 
 void input_memory_size()
 {
-    printf("Informe o tamanho da memória física em KB\n");
+    printf("Informe o tamanho da memoria fisica em KB\n");
 }
 
 void input_process_max_size()
 {
-    printf("Informe o tamanho maxímo de processo em KB\n");
+    printf("Informe o tamanho maximo de processo em KB\n");
 }
 
 void input_page_size()
 {
-    printf("Informe o tamanho da pagína KB\n");
+    printf("Informe o tamanho da pagina KB\n");
 }
 
 void view_menu(unsigned int physical_memory_size, unsigned int process_max_size, unsigned int page_size)
 {
-    printf("Tamanho da memória fisíca = %d Bits\n", physical_memory_size);
-    printf("Tamanho Maxímo de um processo = %d\n", process_max_size);
-    printf("Tamanho da pagína = %d\n", page_size);
+    printf("Tamanho da memoria fisica = %d Bits\n", physical_memory_size);
+    printf("Tamanho maximo de um processo = %d\n", process_max_size);
+    printf("Tamanho da pagina = %d\n", page_size);
 }
 
 void printBynary(int number, int shift)
@@ -386,7 +376,7 @@ void view_memory(memory_t *physical_memory)
     int page_size = physical_memory->size_KB / (int)pow(2, physical_memory->f);
     int total_bits = physical_memory->f + count(physical_memory->process_max_size / page_size);
 
-    printf("Dado   -  Endereço\n");
+    printf("Dado   -  Endereco\n");
     printf("                  \n");
     for (int i = physical_memory->size_KB - 1; i > 0; i--)
     {
@@ -407,10 +397,10 @@ void view_table_page(int number, process_t *process, memory_t *physical_memory)
 {
     process_t *tmp = get_process(number, process);
     page_t *temp_pages = tmp->table_pages;
-    printf("Tamanho do proceso: %d é de %d bytes\n", number, tmp->size_in_bytes);
+    printf("Tamanho do processo: %d é de %d bytes\n", number, tmp->size_in_bytes);
     int shift_memo = physical_memory->f - 1;
 
-    printf("Página - Quadro \n");
+    printf("Pagina - Quadro \n");
 
     while (temp_pages != NULL)
     {
@@ -429,7 +419,7 @@ void view_table_page(int number, process_t *process, memory_t *physical_memory)
 int main(int argc, char *argv[])
 {
     printf("GRUPO BRUNO ALEXANDRE E VINICIUS PIZETTA\n\n");
-    printf("Gerenciamento de Memória com Paginação.\n");
+    printf("Trabalho sobre Gerenciamento de Memoria usando Paginacao.\n");
     init();
     menu();
 
