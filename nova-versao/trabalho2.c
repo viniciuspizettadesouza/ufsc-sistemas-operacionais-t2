@@ -279,14 +279,14 @@ void menu()
                 }
                 if (bytes_to_kb(process_size) > process_max_size)
                 {
-                    printf("Processo %d, excede tamanho limite: %d Bytes\n", process_id, kb_to_bytes(process_max_size));
+                    printf("O processo %d, nao pode ser maior que o tamanho limite de %d Bytes\n", process_id, kb_to_bytes(process_max_size));
                     process_size = 0;
                     exit_menu = false;
                 }
                 if (process_bool(process_id, process))
                 {
                     exit_menu = true;
-                    printf("Processo %d, já existe\n", process_id);
+                    printf("Processo %d, ja existe\n", process_id);
                     menu();
                 }
                 if (process_id > 0 && process_size > 0)
